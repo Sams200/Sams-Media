@@ -10,7 +10,7 @@ export class ProfilesService {
   byId(id: string) { return this.repo.findById(id); }
   byUsername(username: string) { return this.repo.findByUsername(username); }
   byInterest(interest: string, limit: number) { return this.repo.findByInterest(interest, limit); }
-  page(offset: number, limit: number) { return this.repo.findPage(offset, limit); }
+  page(offset: number, limit: number, afterId?: string) { return this.repo.findPage(offset, limit, afterId); }
 
   async create(dto: CreateUserProfileDto) {
     try {

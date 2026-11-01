@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS user_social_links (
   url      text NOT NULL,
   PRIMARY KEY (user_id, platform)
 );
-CREATE INDEX IF NOT EXISTS idx_users_created_at ON users (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_users_created_at_id ON users (created_at DESC, id ASC);
 `;
 
 const PROFILE_COLUMNS = `
@@ -117,11 +117,28 @@ export class PostgresUserProfileRepository implements IUserProfileRepository, On
     return rows.map((r) => this.toDomain(r));
   }
 
-  async findPage(offset: number, limit: number): Promise<UserProfile[]> {
-    const { rows } = await this.pool.query(
-      `SELECT ${PROFILE_COLUMNS} FROM users u ${PROFILE_JOINS}
-       ORDER BY u.created_at DESC
-       OFFSET $1 LIMIT $2`, [offset, limit]);
+  async findPage(offset: number, limit: number, afterId?: string): Promise<UserProfile[]> {
+    let rows: QueryResultRow[];
+    if (afterId) {
+      ({ rows } = await this.pool.query(
+        `WITH anchor AS (SELECT created_at, id FROM users WHERE id = $1)
+         SELECT ${PROFILE_COLUMNS}
+         FROM users u ${PROFILE_JOINS}
+         CROSS JOIN anchor
+         WHERE u.created_at < anchor.created_at
+            OR (u.created_at = anchor.created_at AND u.id > anchor.id)
+         ORDER BY u.created_at DESC, u.id ASC
+         LIMIT $2`,
+        [afterId, limit],
+      ));
+    } else {
+      ({ rows } = await this.pool.query(
+        `SELECT ${PROFILE_COLUMNS} FROM users u ${PROFILE_JOINS}
+         ORDER BY u.created_at DESC, u.id ASC
+         OFFSET $1 LIMIT $2`,
+        [offset, limit],
+      ));
+    }
     return rows.map((r) => this.toDomain(r));
   }
 

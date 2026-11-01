@@ -1,5 +1,5 @@
 import { OnModuleDestroy } from '@nestjs/common';
-import { Collection, MongoClient } from 'mongodb';
+import { Collection, Filter, MongoClient } from 'mongodb';
 import { DbImpl, IUserProfileRepository } from './user-profile.repository.js';
 import { CreateUserProfileDto } from '../profiles/dto/create-user-profile.dto.js';
 import { newUserProfile, UserProfile } from '../profiles/entities/user-profile.js';
@@ -19,7 +19,8 @@ export class MongoUserProfileRepository implements IUserProfileRepository, OnMod
       this.col.createIndex({ username: 1 }, { unique: true }),
       this.col.createIndex({ email: 1 }, { unique: true }),
       this.col.createIndex({ interests: 1 }),
-      this.col.createIndex({ createdAt: -1 }),
+      this.col.createIndex({ createdAt: -1, _id: 1 }), 
+      // composite index in case two users are created at the same time
     ]);
   }
 
@@ -51,11 +52,28 @@ export class MongoUserProfileRepository implements IUserProfileRepository, OnMod
     return docs.map((d) => this.toDomain(d));
   }
 
-  async findPage(offset: number, limit: number): Promise<UserProfile[]> {
+  async findPage(offset: number, limit: number, afterId?: string): Promise<UserProfile[]> {
+    let filter: Filter<UserDoc> = {};
+    if (afterId) {
+      const anchor = await this.col.findOne(
+        { _id: afterId },
+        { projection: { createdAt: 1 } },
+      );
+      if (!anchor) return [];
+      filter = {
+        $or: [
+          { createdAt: { $lt: anchor.createdAt } },
+          { createdAt: anchor.createdAt, _id: { $gt: afterId } },
+          // this is bcs of the composite index
+          // $lt means item were searching for is older bcs iso timestamp
+        ],
+      };
+    }
+
     const docs = await this.col
-      .find()
+      .find(filter)
       .sort({ createdAt: -1, _id: 1 })
-      .skip(offset)
+      .skip(afterId ? 0 : offset)
       .limit(limit)
       .toArray();
     return docs.map((d) => this.toDomain(d));

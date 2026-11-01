@@ -43,8 +43,8 @@ export class BenchService {
       () => this.repo.findByUsername(pick(sample).username)));
     results.push(await this.measure('findByInterest', ops, warmup,
       () => this.repo.findByInterest(pick(sample).interests[0] ?? INTERESTS[0], 20)));
-    results.push(await this.measure('findPage(randomDeepOffset)', ops, warmup,
-      () => this.repo.findPage(Math.floor(rand() * Math.max(1, total - 20)), 20)));
+    results.push(await this.measure('findPage(randomCursor)', ops, warmup,
+      () => this.repo.findPage(0, 20, pick(sample).id)));
     results.push(await this.measure('updateBio', ops, warmup,
       () => this.repo.updateBio(pick(sample).id, 'benchmark bio update')));
 

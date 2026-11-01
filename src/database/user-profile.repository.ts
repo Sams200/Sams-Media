@@ -19,7 +19,7 @@ export interface IUserProfileRepository {
   findById(id: string): Promise<UserProfile | null>;
   findByUsername(username: string): Promise<UserProfile | null>;
   findByInterest(interest: string, limit: number): Promise<UserProfile[]>;
-  findPage(offset: number, limit: number): Promise<UserProfile[]>;
+  findPage(offset: number, limit: number, afterId?: string): Promise<UserProfile[]>;
   create(dto: CreateUserProfileDto): Promise<UserProfile>;
   updateBio(id: string, bio: string): Promise<boolean>;
 }

@@ -29,16 +29,17 @@ export class ProfilesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Search by interest, or paginate (created_at desc) when no interest given' })
-  @ApiQuery({ name: 'interest', required: false, type: String, description: '' })
+  @ApiOperation({ summary: 'Search by interest, or paginate (created_at desc, keyset cursor via `after`) when no interest given' })
+  @ApiQuery({ name: 'interest', required: false, type: String, description: 'A single User Interest' })
+  @ApiQuery({ name: 'after', required: false, type: String, description: 'Cursor id of the last profile from the previous page' })
   search(
     @Query('interest') interest?: string,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
     @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset?: number,
+    @Query('after', new ParseUUIDPipe({ optional: true })) after?: string,
   ) {
-    return interest
-      ? this.service.byInterest(interest, limit!)
-      : this.service.page(offset!, limit!);
+    if (interest) return this.service.byInterest(interest, limit!);
+    return this.service.page(offset!, limit!, after);
   }
 
   @Post()
