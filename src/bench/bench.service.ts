@@ -13,6 +13,7 @@ export interface QueryStat {
 }
 
 // https://github.com/cprosche/mulberry32
+// simple prng to get deterministic results (I dont trust JS)
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
@@ -36,6 +37,7 @@ export class BenchService {
     const rand = mulberry32(rngSeed);
     const pick = <T,>(arr: T[]): T => arr[Math.floor(rand() * arr.length)];
 
+    // benchmark DB operations on users
     const results: QueryStat[] = [];
     results.push(await this.measure('findById', ops, warmup,
       () => this.repo.findById(pick(sample).id)));
@@ -70,6 +72,7 @@ export class BenchService {
     const totalMs = performance.now() - t0;
 
     samples.sort((a, b) => a - b);
+    // percentage under 50,95,99 ms
     const pct = (p: number) => samples[Math.min(samples.length - 1, Math.ceil((p / 100) * samples.length) - 1)];
     const r = (n: number) => Math.round(n * 1000) / 1000;
 

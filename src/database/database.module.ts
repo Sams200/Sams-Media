@@ -12,7 +12,6 @@ const repositoryProvider: Provider = {
   useFactory: async (config: ConfigService): Promise<IUserProfileRepository> => {
     const logger = new Logger('DatabaseModule');
 
-    // should use a factory here but lazy
     const impl = (config.get<string>('DB_IMPL') ?? 'postgres').toLowerCase() as DbImpl;
 
     let repo: IUserProfileRepository;
