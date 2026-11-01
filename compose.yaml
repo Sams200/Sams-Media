@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:16-alpine
+    container_name: sams-media-postgres
+    environment:
+      POSTGRES_USER: sams
+      POSTGRES_PASSWORD: sams
+      POSTGRES_DB: sams_media
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sams -d sams_media"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mongo:
+    image: docker.io/library/mongo:8
+    container_name: sams-media-mongo
+    ports: ["27017:27017"]
+    volumes: [mongodata:/data/db]
+
+volumes:
+  pgdata:
+  mongodata:

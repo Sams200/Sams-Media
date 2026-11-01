@@ -1,0 +1,5 @@
+because of the shape of the data, mongodb performs much better here
+User profiles use arrays like interests and sociallinks,
+which mongo stores as a self-contained document
+for postgres we split into 3 tables, which follows normalization rules,
+but joins perform much wors and the arrays need to be reassembled for each read
